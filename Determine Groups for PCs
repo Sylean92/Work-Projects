@@ -1,0 +1,30 @@
+Import-Module ActiveDirectory
+
+# % = for each
+
+# File name of PC list
+# ..................................................
+#Temporary stores all PCs in AD to a text file    
+$ALLPCs = "C:\Temp\SpecificPCs.txt"
+#Temporary stores all Groups in Ad to text file
+$ALLGroups = "C:\Temp\SpecificGroups.txt"
+#...................................................
+
+$PCs = Get-Content $ALLPCs
+
+#final edit with Matthew B and personal editing as well
+
+foreach ($PC in $PCs) {
+    $ADPC = get-adcomputer $PC -properties memberof 
+    $thisname = $ADPC.name 
+    $thismemberof = $ADPC.memberof
+    write-host "Specified PC: $thisname" -foreground red 
+    write-host "   $thismemberof"  
+}
+
+# OR print it this way
+#$PCs | % {get-adcomputer $_ -properties memberof | select name , memberof}  
+
+
+#If you want to get all PCs under one group[same process that AD Lister provides]
+$ALLPC = Get-ADGroupMember “APP_FAARLAPTOP_7M” | Select Name, SamAccountName, objectClass

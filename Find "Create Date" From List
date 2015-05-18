@@ -1,0 +1,13 @@
+Import-Module ActiveDirectory
+
+$createDate = "C:\Temp\Datelisting.txt"
+
+Clear-content $createDate
+
+$lists = Get-content "C:\Temp\CreateDate.txt"
+
+foreach ($list in $lists)
+{
+Get-ADUser $list -Properties whenCreated | Format-List Name,whenCreated }
+Write-host -ForegroundColor Blue "$lists"
+#$list | Out-File $createDate -Append

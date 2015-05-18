@@ -1,0 +1,33 @@
+Import-Module ActiveDirectory
+<#
+Created by: Alyssa C
+IT Specialist Intern
+Date Created: 6/19/14
+Date Modified: 6/20/14
+
+This code is made to save a file multiple times as copies. Best used to make duplicates of a file with
+many IDs in one.
+#>
+
+#Grab all files in this location
+$Files = Get-ChildItem -Path "F:\xxtb75910+ copies\" -Filter xxtb75910.pdf -Recurse
+
+#added by Matthew B and edited my code with variables anywhere these are located
+#Date Modified: 6/20/14
+#----------------------
+$baseName = "xxtb"
+$startingPoint = 75911
+$endingPoint = 75999
+#----------------------
+
+#Loop the item # amount of times to create copies
+
+do
+{
+    Foreach ($f in $Files)
+    {
+       Copy-Item $f.FullName ("F:\xxtb75910+ copies\" + $baseName + $startingPoint.ToString("00000") + ".pdf" ) 
+       $startingPoint++
+    }
+
+} while ($startingPoint -le $endingPoint)

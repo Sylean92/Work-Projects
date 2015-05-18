@@ -1,0 +1,69 @@
+############################
+# Created by: Alyssa C
+# Date Created: 11/03/14
+# Grabs listing of mail IDs 
+# and their information
+############################
+
+Import-Module ActiveDirectory
+
+$document = "C:\Temp\MLlisting.txt"
+
+Clear-Content $document
+
+<# 
+-ne = not equal
+-eq = equal
+-lt = less than
+-gt = greater than
+-ge = greater than or qual to
+-le = less than or equal to
+#>
+
+$Header = `
+"User ID" + "|" + `
+"Display Name" + "|" + `
+"Description" + "|" + `
+"ID Owner" + "|" + `
+"ID Owner Name"
+
+
+#Write out the header
+$Header | Out-File $document -Append
+
+$Users = Get-ADUser -filter {name -like 'ML*'} -SearchBase "OU=Corporate,DC=we,DC=dirsrv,DC=com" -Properties name, displayname, description, manager 
+
+
+foreach ($User in $Users)
+{
+#manager missing
+if ($User.Manager -eq $null) {
+        $owner = "MISSING"
+		$ownerid = "MISSING"
+        $ownername = "MISSING"
+        
+    } else {
+    #grab the manager's name, surname, and department
+        $owner = Get-ADUser ($User.Manager) -Properties GivenName, Surname, Department
+        $ownerid = $owner.Name
+        $ownername = $owner.Surname + "." + $owner.GivenName
+    }
+
+$listing = `
+    $User.Name + "|" + `
+    $User.DisplayName + "|" + `
+    $User.Description + "|" + `
+    $ownerid + "|" + `
+    $ownername 
+
+$listing | Out-File $document -Append
+
+}
+
+Prints: (FYI - fake information for security purposes)
+
+User ID|Display Name|Description|ID Owner|ID Owner Name
+ML0125|Al-Move (Group-Mbox)|Exchange Resource Account|MISSING|MISSING
+ML0141|CR-Order (Group-Mbox)|Exchange Resource Account|MISSING|MISSING
+ML0442|Remit (Group-Mbox)|Exchange Resource Account|w35001|Dug.Warr
+ML0447|Wer.Comp (Group-Mbox)|Exchange Resource Account|we6101|Hans.Shaw

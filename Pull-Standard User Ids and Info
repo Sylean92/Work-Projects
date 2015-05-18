@@ -1,0 +1,75 @@
+#############################
+# Created by: Alyssa C
+# Date Created: 10/22/14
+#
+#
+#############################
+
+Import-Module ActiveDirectory
+
+$document = "C:\Temp\ADstandard yyyy.txt"
+
+Clear-Content $document
+
+<# 
+-ne = not equal
+-eq = equal
+-lt = less than
+-gt = greater than
+-ge = greater than or qual to
+-le = less than or equal to
+#>
+
+$Header = `
+"User ID" + "|" + `
+"Display Name" + "|" + `
+"Description" + "|" + `
+"ID Owner" + "|" + `
+"ID Owner Name"
+
+
+#Write out the header
+$Header | Out-File $document -Append
+
+#$Users = Get-ADUser -Filter {name -like "xxpc*" -or name -like "xxmd*"} -SearchBase "OU=Corporate,DC=we,DC=dirsrv,DC=com" -Properties name, displayname, description, manager 
+$Users = Get-ADUser -filter {name -ne 'xxpc*' -or name -ne 'xxmd*'} -SearchBase "OU=Corporate,DC=we,DC=dirsrv,DC=com" -Properties name, displayname, description, manager 
+
+
+foreach ($User in $Users)
+{
+#manager missing
+if ($User.Manager -eq $null) {
+        $owner = "MISSING"
+		$ownerid = "MISSING"
+        $ownername = "MISSING"
+        
+    } else {
+    #grab the manager's name, surname, and department
+        $owner = Get-ADUser ($User.Manager) -Properties GivenName, Surname, Department
+        $ownerid = $owner.Name
+        $ownername = $owner.Surname + "." + $owner.GivenName
+    }
+
+$listing = `
+    $User.Name + "|" + `
+    $User.DisplayName + "|" + `
+    $User.Description + "|" + `
+    $ownerid + "|" + `
+    $ownername 
+
+$listing | Out-File $document -Append
+
+}
+
+#write-host "$Users"
+
+Prints: (FYI- information manually changed for security purposes)
+
+User ID|Display Name|Description|ID Owner|ID Owner Name
+xmp4|zzOL.Test|Outlook Test Group  (El Bra) |we1928|Bra.El
+we2111|Vaug.Wal|DO|w4444|Rie.Butger
+w4451|Mole.Jo|CS |w46111|Kla.Petie
+we8000a|Weis-Ad.Tom|Tom's Workstation Admin ID|we8121|Weis.Thom
+do0999a|Frogler.Mark|Mark's Admin ID|do0912|Fro.Marlean
+cm0499|Win.Mar|IT |np3902|Prod.Todd
+w36023a|Knot.NicK-DISABLED|IT - Nick Admin ID-DISABLED |w36151|Knal.Micheal

@@ -1,0 +1,31 @@
+Import-Module ActiveDirectory
+
+$path = "C:\Temp\department.txt"
+
+Clear-Content $path
+
+$Header = "User ID" + "|" + "Department"
+
+$deps = Get-Aduser -filter * -Properties name, extensionAttribute14 | Select name, extensionAttribute14 | Export-CSV $path -notypeinformation
+
+if ($deps.extensionAttribute14 -like "extenstionAttribute14") {
+        $deps.extensionAttribute14 = "Missing"
+}
+
+if ($deps.extensionAttribute14 -like "*  "){
+        $deps.extensionAttribute14 = "Missing"
+}
+
+Out-File $path -Append
+
+
+Prints: (FYI- information was manually changed for security purposes)
+
+"name","extensionAttribute14"
+"xxt",
+"Guest",
+"krb",
+"DIR",
+"Admin",
+"we2011","PG STEAM"
+"w41777","CS FIELD"

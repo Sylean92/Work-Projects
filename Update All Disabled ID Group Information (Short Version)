@@ -1,0 +1,150 @@
+#############################################################
+# 
+# Created by: Alyssa C (IT Specialist Intern)
+# 
+# Date Created: 12/29/14
+# Last Modified: 12/29/14
+#
+# Reason:
+# This script was developed to help with the Acitve Directory
+# Clean-up Effort. This will be automatically run to monitor
+# any disabled IDs. It will display all IDs disabled and any
+# direct reports, group ownership and group approvals for the
+# disabled user. This is will help keep control of Active
+# Directory.
+#
+##############################################################
+
+Import-Module activedirectory
+
+$results = Get-ADUser  -Properties enabled,displayname, sn, name, surname -Filter {name -like "*"}`
+            | Select name,sn,displayname,enabled, surname
+
+    $break1 = "`n"
+    
+    write-host "First User: " -foreground blue $break1
+
+foreach ($user in $results) {
+
+   if ($user.enabled -eq $false){ 
+
+#### Last name of ID had -Disabled to it which isn't caught within desc and info fields ##########
+
+        $SurName = $user.SurName
+#### Removed the "-Disabled" by splitting at -. The 0 takes the lastname and [-1] or [1] would have 
+#### taken "Disabled"
+        $lastname = $SurName.split("-")[0]
+        $searchLast = "*" + $lastname + "*"
+       
+###################################################################################################
+
+        $name = $user.Name
+        $owned = Get-Adgroup -Properties description, managedby -Filter {managedby -eq $name}
+        $approvedInfo = Get-Adgroup -Properties info, description -Filter {info -like $searchLast}
+        $approvedDesc = Get-ADGroup -Properties description -Filter {description -like $searchLast}
+        $description = $owned.description
+        $description2 = $approvedDesc.description
+        $info = $approvedInfo.info
+
+#### Print User ID and Display Name for each Disabled User #######################################
+
+        write-host "User ID: " $user.name
+        write-host "Display Name: " $user.DisplayName
+
+##################################################################################################
+
+#### Locating and Printing for Groups Owner Manages ##############################################
+
+        if ($owned -eq $Null){
+            write-host "Managing Group: " -nonewline
+            write-host "None Found " -foreground red -nonewline
+            write-host " Group Description: " -nonewline
+            write-host "None Provided " -foreground red 
+            }
+        elseif (($description -eq " ") -or ($description -eq $Null)){
+                $owned | % {
+            write-host ("Managing Group: " + $_.name + " Group Description: " )-nonewline
+            write-host "None Provided " -foreground red
+            }
+        }
+        else {
+            $owned | % {write-host ("Managing Group: " + $_.name + " Group Description: " + $_.description -replace `
+             "`r`n", "  ")}
+        }
+
+##################################################################################################
+
+#### Locating and Printing Groups that contain Owner name in the Info Field ######################
+
+        if ($approvedInfo -eq $Null){
+            write-host "Group Containing Name in Info: " -nonewline
+            write-host "None Found " -foreground red -nonewline
+            write-host " Group Description: " -nonewline
+            write-host "None Provided " -foreground red
+
+            }
+        elseif ($info -eq " "){
+            $approvedInfo | % {
+            write-host ("Group Containing Name in Info: " + $_.name + " Group Description: " )-nonewline
+            write-host "None Provided " -foreground red
+            }
+        }
+        else {
+            $approvedInfo | % {write-host ("Group Containing Name in Info: " + $_.name + " Group Description: " + $_.info `
+                -replace "`r`n", "  ")}
+        }
+
+###################################################################################################
+
+#### Locating and Printing Groups that contain Owner name in the Description Field ################
+
+        if ($approvedDesc -eq $Null){
+            write-host "Group Containing Name in Description: " -nonewline
+            write-host "None Found " -foreground red -nonewline
+            write-host " Group Description: " -nonewline
+            write-host "None Provided " -foreground red
+            }
+        elseif ($description2 -eq " "){
+            $approvedDesc | % {
+            write-host ("Group Containing Name in Description: " + $_.name + " Group Description: " )-nonewline
+            write-host "None Provided " -foreground red
+            }
+        }
+        else {
+            $approvedDesc | % {write-host ("Containing Name in Description: " + $_.name + " Group Description: " + $_.description `
+                -replace "`r`n", "  ")}
+        }
+
+###################################################################################################
+
+#### Determine all Direct Reports the Disabled ID owns #######################################################
+write-host "_______________________________________________________________________________"
+
+$directReports = Get-ADUser -Identity $name -Properties directreports | Select -ExpandProperty directreports
+    
+    foreach ($ID in $directReports){
+    
+    if ($ID -ne $Null){
+        $directreports = get-aduser $ID
+        write-host "Direct Reports Listed Under User: " -nonewline
+        write-host $directreports.name -foreground red
+       }
+    else{
+        write-host "No Direct Reports Listed" -foreground red}
+}
+
+
+
+###################################################################################################
+
+write-host $break1 "Next User:" -foreground blue $break1
+
+#>
+
+}#end of if statement
+
+
+}#end foreach
+
+
+################### END OF CODE ###################################################################

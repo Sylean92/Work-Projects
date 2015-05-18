@@ -1,0 +1,172 @@
+This Project consist of 3 separate programs that run 2 separate text documents. 
+Then it compares the differences, and makes copies for Security purposes.
+
+
+OldFile_output.ps1
+#############################################################################
+#Created by: Alyssa Cooke
+#Date Created: 3/2/2015
+#Date Modified: 3/4/2015
+#
+#1st out of 3 scripts to run the inital text document to compare data
+##############################################################################
+
+Import-Module ActiveDirectory
+
+
+$documentOld = "C:\Temp\Old_Supervisor_list_mo_yyyy.txt"
+
+
+Clear-Content $documentOld
+
+
+$Users = Get-AdUser -Filter *  -Properties name,Enabled,Manager,extensionAttribute14 | Where-Object{$_.Enabled}
+
+$Users | ForEach-Object{
+    $props = @{
+        Name = $_.Name
+        Department = $_.extensionAttribute14
+        DirectReports = ($_.Manager | Where-Object{$_} | ForEach-Object{Get-Aduser $_ | Select-object -ExpandProperty Name}) -join ":"
+    }
+
+    New-Object -TypeName psobject -Property $props
+
+} | Select-Object Name,Department,DirectReports | Export-CSV -Delimiter "|" -NoTypeInformation -Path $documentOld
+
+
+NewFile_output.ps1
+#############################################################################
+#Created by: Alyssa Cooke
+#Date Created: 3/2/2015
+#Date Modified: 3/4/2015
+#
+#2nd out of 3 scripts to run a text document fro the current relevant data
+##############################################################################
+
+
+Import-Module ActiveDirectory
+
+$documentNew = "C:\Temp\MonitorChanges\New_Supervisor_list_mo_yyyy.txt"
+
+Clear-Content $documentNew
+
+$Users = Get-AdUser -Filter *  -Properties name,Enabled,Manager,extensionAttribute14 | Where-Object{$_.Enabled}
+
+$Users | ForEach-Object{
+    $props = @{
+        Name = $_.Name
+        Department = $_.extensionAttribute14
+        DirectReports = ($_.Manager | Where-Object{$_} | ForEach-Object{Get-Aduser $_ | Select-object -ExpandProperty Name}) -join ":"
+    }
+
+    New-Object -TypeName psobject -Property $props
+
+} | Select-Object Name,Department,DirectReports | Export-CSV -Delimiter "|" -NoTypeInformation -Path $documentNew
+
+
+Compare_Files.ps1
+Import-Module ActiveDirectory
+
+#############################################################################
+#Created by: Alyssa Cooke
+#Date Created: 3/2/2015
+#Date Modified: 3/4/2015
+#
+#Function:
+#
+#This script should be run after the "NewFile_output.ps1" has been run ONLY. 
+#Running this script prior will cause data loss. The NewFile_output will provide
+#the most current listing of users, department and manager. Once run, the text file
+#will not be empty anymore and can be compared within this Compare_Files.ps1 script.
+#
+#This script will compare to see any differences and output a Share file of all the 
+# differences between the Old and New file.
+#
+#Lastly, this script will create back up files to document the differences and clear the
+#NewFile_output.ps1 so that it is empty before the next monitor run of the script.
+##############################################################################
+
+######################################################################################################################
+# Compare Old file to new File
+
+$documentCompare = "C:\Temp\MonitorChanges\Share_Supervisor_list_mo_yyyy.txt"
+
+#compare-object (get-content $old) (get-content $new) | format-list | Out-File $documentCompare
+Clear-Content $documentCompare
+
+$oldFile = get-content "C:\Temp\MonitorChanges\Old_Supervisor_list_mo_yyyy.txt"
+$newFile = get-content "C:\Temp\MonitorChanges\New_Supervisor_list_mo_yyyy.txt"
+
+#Diff $oldFile $newFile | 
+#Format-Table InputObject, SideIndicator -AutoSize
+$Header = "Action" + "|" + "Name" + "|" + "Department" + "|" + "Manager"
+
+$Header | Out-File $documentCompare -Append
+
+$differences = compare-object $oldFile $newFile
+foreach($line in $differences){
+if($differences){
+    if ($line.sideindicator -eq "=>"){
+        $updatelist = "Update to old: " + "|" + $line
+    
+    }
+    elseif ($line.sideindicator -eq "<="){
+        $oldlist = "Old data: " + "|" + $line
+    }
+
+}
+else {
+    "No Updates have been made"
+}
+
+
+
+}
+$listing = $updatelist 
+$listing | Out-File $documentCompare -Append
+$listing2 = $oldlist
+$listing2 | Out-File $documentCompare -Append
+########################################################################################################
+
+#Copy SharedFile text document that shows the file updates
+
+$SourceFile1 = "C:\Temp\MonitorChanges\Share_Supervisor_list_mo_yyyy.txt"
+$DestinationFile1 = "C:\Temp\MonitorChanges\Back_ups\Recorded_Changes\Share_Supervisor_list_mo_yyyy.txt"
+
+If (Test-Path $DestinationFile1) {
+    $i = 0
+    While (Test-Path $DestinationFile1) {
+        $i += 1
+        $DestinationFile1 = "C:\Temp\MonitorChanges\Back_ups\Recorded_Changes\Share_Supervisor_list_mo_yyyy$i.txt"
+    }
+} Else {
+    New-Item -ItemType File -Path $DestinationFile1 -Force
+}
+
+Copy-Item -Path $SourceFile1 -Destination $DestinationFile1 -Force
+
+
+#Copy NewSupervisor text document so that they can be documented
+
+$SourceFile2 = "C:\Temp\MonitorChanges\New_Supervisor_list_mo_yyyy.txt"
+$DestinationFile2 = "C:\Temp\MonitorChanges\Back_ups\New_Supervisor_list_mo_yyyy.txt"
+
+If (Test-Path $DestinationFile2) {
+    $i = 0
+    While (Test-Path $DestinationFile2) {
+        $i += 1
+        $DestinationFile2 = "C:\Temp\MonitorChanges\Back_ups\New_Supervisor_list_mo_yyyy$i.txt"
+    }
+} Else {
+    New-Item -ItemType File -Path $DestinationFile2 -Force
+}
+
+Copy-Item -Path $SourceFile2 -Destination $DestinationFile2 -Force
+
+################################################################################################################
+
+#Replace the newFile to the old File
+Remove-Item "C:\Temp\MonitorChanges\Old_Supervisor_list_mo_yyyy.txt"
+Rename-Item "C:\Temp\MonitorChanges\New_Supervisor_list_mo_yyyy.txt" "C:\Temp\MonitorChanges\Old_Supervisor_list_mo_yyyy.txt"
+New-Item "C:\Temp\MonitorChanges\New_Supervisor_list_mo_yyyy.txt" -type file
+

@@ -1,0 +1,25 @@
+Import-Module ActiveDirectory
+
+$exportlist = "C:\Temp\managedby.txt"
+
+Clear-Content $exportlist
+
+$Header = `
+"Group ID Name" + "|" + "ManagedBy"
+
+$Header | Out-File $exportlist -Append
+
+$list = get-adgroup -properties name, managedby -filter {name -like "APP_*" -or name -like "SAP_*"} `
+ | Select name, managedby | Export-CSV $exportlist -NoType -Delimiter '|'
+ 
+ 
+ Prints: (FYI- edited information for security purposes)
+ 
+ "name"|"managedby"
+"APP_113"|
+"APP_IME"|
+"APP_1TIM"|
+"APP_3500"|"CN=w30122,OU=Standard,OU=Users,OU=Corporate,DC=we,DC=dirsrv,DC=com"
+"APP_3500R"|
+"APP_ACLDLIN"|
+"APP_ACLWORK"|"CN=w39888,OU=Standard,OU=Users,OU=Corporate,DC=we,DC=di

@@ -1,0 +1,113 @@
+Import-Module ActiveDirectory
+
+##########################################################################
+#This Section involves filtering WA groups and retriving their information
+#In the info section (aka Notes section) is very important to look
+#over if groups require approvals or not
+
+##########################################################################
+
+$pathALL = "C:\Temp\groupsALL.txt"
+#$pathApproval = "C:\Temp\groupsApprove.txt"
+
+Clear-Content $pathALL
+#Clear-Content $pathApproval
+
+$Header = `
+"Group ID Name" + '`' + `
+"Description" + '`' + `
+"Notes Field" + '`' + "Members" + '`' + "Member Count"
+
+#Write out the header
+$Header | Out-File $pathALL -Append
+
+##The info fields had line breaks of data. This is to remove the line
+##breaks so that the data will print in one cell
+
+$emptys = get-adgroup -properties name, description, info, members -filter {name -like "BU_*"} `
+ | Select name, description, info, members
+
+
+foreach ($lines in $emptys.info){
+
+$lines -replace "``n","" 
+
+}
+
+foreach ($empty in $emptys)
+{
+    
+    #clears previous 
+    $members = ""
+    #initialize member counting
+    #$count = 0
+    foreach ($member in $empty.members)
+      {
+        #counts how many members
+        #$count += 1
+        #$countSum = "The group $($group.Name) has $count user(s)."
+        #$users = (Get-ADGroupMember -Identity $member.DistinguishedName).Count
+        $string = $member.substring(3,$member.indexof(",")-3)
+        $members = $members + ":" + $string
+       }
+
+
+$listing =`
+    $empty.Name + '`' + `
+    $empty.Description + '`' + `
+    $lines + '`' + $members
+
+$listing | Out-File $pathALL -Append
+}
+
+#Count members of group outside above code Option1 ##############################
+$computerCount = 0
+$userCount = 0
+
+foreach ($group in $groups){
+get-adgroupmember | % {
+
+if($_.objectClass -eq "computer"){
+    $computerCount +=1}
+elseif ($_.objectClass -eq "user"){
+    $userCount += 1}
+} | Select user, computer 
+
+}
+write-host $computerCount
+#>
+################################################################
+#This next section will determine the member count in the groups
+#as a separate program before I incorporated the $count variable
+#in the above program
+Option 2
+################################################################
+#>
+
+$pathCount = "C:\Temp\Groupcount.txt"
+Clear-Content $pathcount
+
+$groups = Get-ADGroup -filter {(name -like "BU_*")}
+foreach($group in $groups){
+    #initializing
+    $countUser = ""
+    $countUser = ((get-Adgroup $group -properties members).members).count
+"The group $($group.Name) has $countUser user(s)." | Out-File $pathCount -Append
+}
+
+#The reason the groups that had 1 user wasn't showing up was because they were returned as an object.
+#When it is more than 1, powershell automatically turns the variable into an array of objects.
+#Therefore, we need to call the members, then .members of the members to return any that equal 1.
+
+
+##############################################################################################
+#Grab Group Info
+##############################################################################################
+<#
+$pathALL = "C:\Temp\groupsInfo.txt"
+
+get-adgroup -properties name, info -filter {name -like "WA-*" -or name -like "Workstation*"} `
+ | Select name, info 
+ 
+
+#>

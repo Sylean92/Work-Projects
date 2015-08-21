@@ -1,0 +1,187 @@
+# Insert User prompt to continue with 5 minute count down or similar here
+
+    #Value  Description   
+    #0 Show OK button. 
+    #1 Show OK and Cancel buttons. 
+    #2 Show Abort, Retry, and Ignore buttons. 
+    #3 Show Yes, No, and Cancel buttons. 
+    #4 Show Yes and No buttons. 
+    #5 Show Retry and Cancel buttons.
+    
+$prompt = new-object -comobject wscript.shell
+$answer = $prompt.popup("Excel will automatically shut down. Any unsaved work will be lost! Continue?",5,"Alert: Excel Job About to Run.",3) #first number is timeout, second is display.
+
+$options = 0
+
+    #7 = no , 6 = yes, -1 = timeout
+        
+    if($answer -eq 6) 
+    {
+
+        Write-Host "Yes was selected"
+        $options = 1   
+    }
+    if($answer -eq 7) {Write-Host "No was selected"}
+            
+    if($answer -eq -1) 
+    {
+        $options = 2
+    }
+            
+     if($answer -eq 2) {Write-Host "Canceled by user.";exit}   
+
+#########################################################
+<#
+    if ($options -eq 1 -or $options -eq 2){
+        $excel = new-object -comobject excel.application
+        $workbook = $excel.workbooks.open("\\.....\...\Power Shell\Test 1.xlsx")
+        $worksheet = $workbook.worksheets.item(1)
+        $excel.Run("Auto_open")
+
+        $xlCSV=6
+        $Excelfilename = "\\.....\...\Power Shell\Test 1.xlsx"
+        $CSVfilename = "\\.....\...\Power Shell\Test 1.csv"
+        $Excel = New-Object -comobject Excel.Application
+        
+        
+        $Excel.Visible = $False
+        $Excel.displayalerts=$False
+        $Workbook = $Excel.Workbooks.Open($ExcelFileName)
+        $Workbook.SaveAs($CSVfilename,$xlCSV)
+
+        $excel.quit()
+        Stop-Process -processname EXCEL* -Force
+        [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel)
+        Remove-Variable excel 
+ #>       
+ 
+        #Additions - 7/20/2015 ########################################################
+    
+        #Determine Modified Date/Creation Date/ Name of files
+        
+        $location = "\\.....\...\Power Shell\"
+        $files = get-childitem $location | Select-Object Mode,CreationTime,Length,Name, LastWriteTime
+        #write-host `n`
+        $count = 0
+        
+        $breakLine = "`n"
+        $information = ""
+        
+        
+        <#
+            #Filter Creation Time based on a time frame
+
+            $date_to_query = "7/15/2015"
+            write-host "All files before " $date_to_query -foregroundcolor "red"
+            write-host `n`
+
+            foreach ($file in $files) {
+            $count = $count + 1
+
+                if ($file.CreationTime -le $date_to_query){
+                    $name = $file.Name
+                    $creationTime = $file.CreationTime
+                    $lastWrite = $file.LastWriteTime
+    
+                    $information = $information + $breakLine + $breakLine + "File # $count `n` File: $name `n` Creation Date: $creationTime 
+                                    `n` Last Modified Date: $lastWrite"
+                    write-host "File: " $name
+                    write-host "Creation Date: " $creationTime
+                    write-host "Last Modified Date: " $lastWrite
+                    write-host `n`
+                }
+            }
+            #write-host $count
+
+
+            #Display all files
+            write-host "All files" -foregroundcolor "red"
+            write-host `n`#>     
+            foreach ($file in $files) {
+                $count = $count + 1
+                $name = $file.Name
+                $creationTime = $file.CreationTime
+                $lastWrite = $file.LastWriteTime
+                
+                $information = $information + $breakLine + $breakLine + "File # $count `n` File: $name `n`Creation Date: $creationTime `n` Last Modified Date: $lastWrite"
+                #write-host "File: " $name
+                #write-host "Creation Date: " $creationTime
+                #write-host "Last Modified Date: " $lastWrite
+                #write-host `n`
+   
+            }
+
+        #################################################################
+      
+    
+    #Additions - 7/17/2015 ##############################################################
+    
+    #Count number of records in a folder based on extension or total amount
+    
+    $filepath = "\\.....\...\Power Shell\"
+    $filetypeXLSX = "*.xlsx"
+    $filetypeXLSM = "*.xlsm"
+    $filetypeCSV = "*.csv"
+    $file_countXLSX = [System.IO.Directory]::GetFiles("$filepath", "$filetypeXLSX").Count
+    $file_countXLSM = [System.IO.Directory]::GetFiles("$filepath", "$filetypeXLSM").Count
+    $file_countCSV = [System.IO.Directory]::GetFiles("$filepath", "$filetypeCSV").Count
+    $all_files = ( Get-ChildItem $filepath | Measure-Object ).Count
+    
+    #validate counts
+    #Write-Host "Total number of XLSX files is: " $file_countXLSX
+    #Write-Host "Total number of XLSM files is: "$file_countXLSM
+    #Write-Host "Total number of CSV files is: "$file_countCSV
+    #Write-Host "Total of all files and folders within the directory folder is: " ( Get-ChildItem $filepath | Measure-Object ).Count;
+    
+    ####################################################################
+    
+    #Additions - 7/17/2015 ############################################
+    
+    #Line below forces Outlook to Open
+    #Start-Process Outlook
+
+    $outlook = New-Object -com Outlook.Application
+
+ 
+    $mail = $outlook.CreateItem(0)
+
+    #2 = high importance email header
+    $mail.importance = 2
+
+    $mail.subject = “File count within Directory“
+
+    $mail.body = @"
+Within the main directory: 
+
+\\.....\...\Power Shell\ 
+
+We have located the following file counts:
+
+Total number of XLSX files is: $file_countXLSX
+Total number of XLSM files is: $file_countXLSM
+Total number of CSV files is: $file_countCSV
+
+Total of all files and folders within the directory folder is: $all_files
+
+File Information Below:
+$information
+
+"@
+
+    #for multiple email, use semi-colon ; to separate
+    $mail.To = “my.email@yahoo.com“
+    $mail.Send()
+
+    #########################################################
+    #}
+    
+#>
+    
+# 
+
+
+
+
+exit
+# 
+# 

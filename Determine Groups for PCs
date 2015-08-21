@@ -27,4 +27,4 @@ foreach ($PC in $PCs) {
 
 
 #If you want to get all PCs under one group[same process that AD Lister provides]
-$ALLPC = Get-ADGroupMember “APP_FAARLAPTOP_7M” | Select Name, SamAccountName, objectClass
+$ALLPC = Get-ADGroupMember “APP_FAAR_7” | Select Name, SamAccountName, objectClass

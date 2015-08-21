@@ -31,8 +31,8 @@ $Header = `
 #Write out the header
 $Header | Out-File $document -Append
 
-#$Users = Get-ADUser -Filter {name -like "xxpc*" -or name -like "xxmd*"} -SearchBase "OU=Corporate,DC=we,DC=dirsrv,DC=com" -Properties name, displayname, description, manager 
-$Users = Get-ADUser -filter {name -ne 'xxpc*' -or name -ne 'xxmd*'} -SearchBase "OU=Corporate,DC=we,DC=dirsrv,DC=com" -Properties name, displayname, description, manager 
+#$Users = Get-ADUser -Filter {name -like "xx*" -or name -like "xxm*"} -SearchBase "OU=..,DC=..,DC=...,DC=.." -Properties name, displayname, description, manager 
+$Users = Get-ADUser -filter {name -ne 'xx*' -or name -ne 'xxm*'} -SearchBase "OU=..,DC=..,DC=...,DC=." -Properties name, displayname, description, manager 
 
 
 foreach ($User in $Users)

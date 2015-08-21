@@ -12,7 +12,7 @@ $ALLGroups = "C:\Temp\SpecificGroups.txt"
 
 $PCs = Get-Content $ALLPCs
 
-#final edit with Matthew B and personal editing as well
+#final edit with team and personal editing as well
 
 foreach ($PC in $PCs) {
     $ADPC = get-adcomputer $PC -properties memberof 
